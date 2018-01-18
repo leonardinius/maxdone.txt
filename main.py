@@ -26,7 +26,7 @@ def prettyprint(jsondata):
 
 
 class API:
-    base_url = 'https://maxdone.micromiles.co/services'
+    host_url = 'https://maxdone.micromiles.co'
     json_headers = dict(
         {'Content-Type': 'application/json', 'Accept': 'application/json'})
 
@@ -34,7 +34,7 @@ class API:
         self.cookies = dict()
 
     def login(self, username, password):
-        req = requests.post('{0}/j_spring_security_check'.format(self.base_url), allow_redirects=False, data={
+        req = requests.post('{0}/services/j_spring_security_check'.format(self.host_url), allow_redirects=False, data={
             '_spring_security_remember_me':	'on',
             'j_username':  username,
             'j_password': password,
@@ -46,14 +46,14 @@ class API:
 
     def todos(self):
         req = requests.get(
-            '{0}/v1/tasks/todo'.format(self.base_url), cookies=self.cookies, headers=self.json_headers)
+            '{0}/services/v1/tasks/todo'.format(self.host_url), cookies=self.cookies, headers=self.json_headers)
         req.raise_for_status()
         return req.json()
 
     def completed(self, page, pagesize):
         req = requests.get(
-            '{0}/v1/tasks/completed'.format(
-                self.base_url),
+            '{0}/services/v1/tasks/completed'.format(
+                self.host_url),
             cookies=self.cookies,
             headers=self.json_headers,
             params={
@@ -73,5 +73,5 @@ if __name__ == '__main__':
         enable_loging()
 
     api = API().login(os.environ['USERNAME'], os.environ['PASSWORD'])
-    # print(prettyprint(api.todos()))
+    print(prettyprint(api.todos()))
     print(prettyprint(api.completed(0, 10 ** 9)))
