@@ -27,7 +27,8 @@ def prettyprint(jsondata):
 
 class API:
     host_url = 'https://maxdone.micromiles.co'
-    json_headers = dict({'Content-Type': 'application/json', 'Accept': 'application/json'})
+    json_headers = dict(
+        {'Content-Type': 'application/json', 'Accept': 'application/json'})
 
     def __init__(self):
         self.cookies = dict()
@@ -45,7 +46,9 @@ class API:
 
     def todos(self):
         req = requests.get(
-            '{0}/services/v1/tasks/todo'.format(self.host_url), cookies=self.cookies, headers=self.json_headers)
+            '{0}/services/v1/tasks/todo'.format(self.host_url),
+            cookies=self.cookies,
+            headers=self.json_headers)
         req.raise_for_status()
         return req.json()
 
