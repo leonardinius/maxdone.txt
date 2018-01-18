@@ -1,5 +1,9 @@
-import requests
+# coding=utf-8
+
 import os
+import json
+import requests
+import html2text as _html2text
 
 
 def enable_loging():
@@ -19,9 +23,16 @@ def enable_loging():
     requests_log.propagate = True
 
 
+def html2text(html):
+    h = _html2text.HTML2Text()
+    h.ignore_links = False
+    return h.handle(html)
+
+
 def prettyprint(jsondata):
-    import json
-    return json.dumps(jsondata, sort_keys=True,
+    return json.dumps(jsondata,
+                      ensure_ascii=False, encoding='utf-8',
+                      sort_keys=True,
                       indent=4, separators=(',', ': '))
 
 
@@ -66,8 +77,28 @@ class ApiV1:
         req.raise_for_status()
         return req.json()
 
-    # https://maxdone.micromiles.co/services/v1/user-contexts?_=1516242861670
-    # https://maxdone.micromiles.co/services/v1/private-goals/my?size=27&page=0&title=&mode=&statuses=canceled,postponed,not_started,in_progress,completed&format=json&_=1516242687474
+    def contexts(self):
+        req = requests.get(
+            '{0}/services/v1/user-contexts'.format(
+                self.base_uri),
+            cookies=self.cookies,
+            headers=self.json_headers)
+        req.raise_for_status()
+        return req.json()
+
+    def goals(self, page, pagesize):
+        req = requests.get(
+            '{0}/services/v1/private-goals/my'.format(
+                self.base_uri),
+            cookies=self.cookies,
+            headers=self.json_headers,
+            params={
+                'size': pagesize,
+                'page': page,
+                'format': 'json'
+            })
+        req.raise_for_status()
+        return req.json()
 
 
 if __name__ == '__main__':
@@ -75,5 +106,7 @@ if __name__ == '__main__':
         enable_loging()
 
     api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
-    print(prettyprint(api.todos()))
-    print(prettyprint(api.completed(0, 10 ** 9)))
+    # print(prettyprint(api.todos()))
+    # print(prettyprint(api.completed(0, 10 ** 9)))
+    # print(prettyprint(api.contexts()))
+    # print(prettyprint(api.goals(0, 10 ** 9)))
