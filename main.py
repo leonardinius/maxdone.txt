@@ -25,16 +25,16 @@ def prettyprint(jsondata):
                       indent=4, separators=(',', ': '))
 
 
-class API:
-    host_url = 'https://maxdone.micromiles.co'
+class ApiV1:
     json_headers = dict(
         {'Content-Type': 'application/json', 'Accept': 'application/json'})
 
-    def __init__(self):
+    def __init__(self, base_uri='https://maxdone.micromiles.co'):
+        self.base_uri = base_uri
         self.cookies = dict()
 
     def login(self, username, password):
-        req = requests.post('{0}/services/j_spring_security_check'.format(self.host_url), allow_redirects=False, data={
+        req = requests.post('{0}/services/j_spring_security_check'.format(self.base_uri), allow_redirects=False, data={
             '_spring_security_remember_me':	'on',
             'j_username':  username,
             'j_password': password,
@@ -46,7 +46,7 @@ class API:
 
     def todos(self):
         req = requests.get(
-            '{0}/services/v1/tasks/todo'.format(self.host_url),
+            '{0}/services/v1/tasks/todo'.format(self.base_uri),
             cookies=self.cookies,
             headers=self.json_headers)
         req.raise_for_status()
@@ -55,7 +55,7 @@ class API:
     def completed(self, page, pagesize):
         req = requests.get(
             '{0}/services/v1/tasks/completed'.format(
-                self.host_url),
+                self.base_uri),
             cookies=self.cookies,
             headers=self.json_headers,
             params={
@@ -74,6 +74,6 @@ if __name__ == '__main__':
     if 'HTTP_DEBUG' in os.environ:
         enable_loging()
 
-    api = API().login(os.environ['USERNAME'], os.environ['PASSWORD'])
+    api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
     print(prettyprint(api.todos()))
     print(prettyprint(api.completed(0, 10 ** 9)))
