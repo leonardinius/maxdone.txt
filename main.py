@@ -4,6 +4,7 @@ import os
 import json
 import requests
 import html2text as _html2text
+import string
 
 
 def enable_loging():
@@ -27,6 +28,18 @@ def html2text(html):
     h = _html2text.HTML2Text()
     h.ignore_links = False
     return h.handle(html)
+
+
+def _namify(name):
+    return ''.join(string.capwords(name.decode('utf-8')).split(' '))
+
+
+def projectify(name):
+    return '+' + _namify(name)
+
+
+def tagify(name):
+    return '@' + _namify(name)
 
 
 def prettyprint(jsondata):
@@ -110,3 +123,5 @@ if __name__ == '__main__':
     # print(prettyprint(api.completed(0, 10 ** 9)))
     # print(prettyprint(api.contexts()))
     # print(prettyprint(api.goals(0, 10 ** 9)))
+    print(projectify('this Это я проект 123'))
+    print(tagify('this Это я tag 123'))
