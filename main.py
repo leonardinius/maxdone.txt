@@ -27,8 +27,7 @@ def prettyprint(jsondata):
 
 class API:
     host_url = 'https://maxdone.micromiles.co'
-    json_headers = dict(
-        {'Content-Type': 'application/json', 'Accept': 'application/json'})
+    json_headers = dict({'Content-Type': 'application/json', 'Accept': 'application/json'})
 
     def __init__(self):
         self.cookies = dict()
