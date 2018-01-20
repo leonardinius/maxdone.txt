@@ -5,6 +5,7 @@ import json
 import requests
 import html2text as _html2text
 import string
+import re
 
 
 def enable_loging():
@@ -30,8 +31,15 @@ def html2text(html):
     return h.handle(html)
 
 
+RE_PUNCTUATION = re.compile(r'[\s{}]+'.format(re.escape(string.punctuation)))
+
+
 def _namify(name):
-    return ''.join(string.capwords(name.decode('utf-8')).split(' '))
+    if isinstance(name, str):
+        cap = string.capwords(name.decode('utf-8'))
+    else:
+        cap = string.capwords(name)
+    return ''.join(RE_PUNCTUATION.split(cap))
 
 
 def projectify(name):
@@ -114,14 +122,31 @@ class ApiV1:
         return req.json()
 
 
+def obj2dict(data):
+    obj = {kv['id']: kv['title'] for kv in data}
+    return obj
+
+
+def uprint(s):
+    if isinstance(s, unicode):
+        print(s.encode('utf-8'))
+    else:
+        print(s)
+
+
 if __name__ == '__main__':
     if 'HTTP_DEBUG' in os.environ:
         enable_loging()
 
     api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
-    # print(prettyprint(api.todos()))
-    # print(prettyprint(api.completed(0, 10 ** 9)))
-    # print(prettyprint(api.contexts()))
-    # print(prettyprint(api.goals(0, 10 ** 9)))
-    print(projectify('this Это я проект 123'))
-    print(tagify('this Это я tag 123'))
+
+    uprint(prettyprint(obj2dict(api.todos())))
+    uprint(prettyprint(obj2dict(api.completed(0, 10 ** 9)['content'])))
+
+    tags = obj2dict(api.contexts())
+    uprint(prettyprint(list(tagify(v) for k, v in tags.iteritems())))
+
+    goals = obj2dict(api.goals(0, 10 ** 9)['content'])
+    uprint(prettyprint(list(projectify(v) for k, v in goals.iteritems())))
+
+    uprint(prettyprint('This is Это я задача'))
