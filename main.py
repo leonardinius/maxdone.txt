@@ -107,6 +107,15 @@ class ApiV1:
         req.raise_for_status()
         return req.json()
 
+    def categories(self):
+        req = requests.get(
+            '{0}/services/v1/tasks/projects'.format(
+                self.base_uri),
+            cookies=self.cookies,
+            headers=self.json_headers)
+        req.raise_for_status()
+        return req.json()
+
     def goals(self, page, pagesize):
         req = requests.get(
             '{0}/services/v1/private-goals/my'.format(
@@ -143,8 +152,11 @@ if __name__ == '__main__':
     uprint(prettyprint(obj2dict(api.todos())))
     uprint(prettyprint(obj2dict(api.completed(0, 10 ** 9)['content'])))
 
-    tags = obj2dict(api.contexts())
-    uprint(prettyprint(list(tagify(v) for k, v in tags.iteritems())))
+    tags_v1 = obj2dict(api.contexts())
+    uprint(prettyprint(list(tagify(v) for k, v in tags_v1.iteritems())))
+
+    tags_v2 = obj2dict(api.categories())
+    uprint(prettyprint(list(tagify(v) for k, v in tags_v2.iteritems())))
 
     goals = obj2dict(api.goals(0, 10 ** 9)['content'])
     uprint(prettyprint(list(projectify(v) for k, v in goals.iteritems())))
