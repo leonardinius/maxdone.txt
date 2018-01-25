@@ -1,11 +1,17 @@
 # coding=utf-8
 
-import os
 import json
-import requests
-import html2text as _html2text
-import string
+import os
 import re
+import signal
+import SimpleHTTPServer
+import SocketServer
+import string
+import sys
+import threading
+
+import html2text as _html2text
+import requests
 
 
 def enable_loging():
@@ -172,7 +178,24 @@ class MaxdoneTxt:
         obj2dict(api.todos())
 
 
+class HtmlLocalhostClient:
+    def __init__(self, port=8000):
+        self.port = port
+        self.handler = SimpleHTTPServer.SimpleHTTPRequestHandler
+        self.httpd = SocketServer.TCPServer(("", port), self.handler)
+
+    def serve_forever(self):
+        self.httpd.serve_forever()
+
+
+def signal_handler(signal, frame):
+    uprint("\nYou pressed Ctrl+C!")
+    sys.exit(0)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, signal_handler)
+
     if 'HTTP_DEBUG' in os.environ:
         enable_loging()
 
@@ -185,3 +208,8 @@ if __name__ == '__main__':
     # uprint(prettydumps(obj2dict(api.todos())))
     # uprint(prettydumps(obj2dict(api.completed(0, 10 ** 9)['content'])))
 
+    server = HtmlLocalhostClient()
+    uprint(("The maxdone.txt client is running at http://127.0.0.1:{0}\n" +
+            "Press Ctrl+C to exit." +
+            "").format(server.port))
+    server.serve_forever()

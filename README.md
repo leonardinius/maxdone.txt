@@ -1,5 +1,11 @@
 # maxdone.txt
 
+## index.html 
+
+Bulldog is an HTML view for Todo.txt (http://todotxt.com).
+
+&copy; Infews LLC - MIT License - more at http://github.com/infews/bulldog
+
 tbd, wip
 
 ```
