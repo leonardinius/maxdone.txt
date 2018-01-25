@@ -50,7 +50,19 @@ def tagify(name):
     return '@' + _namify(name)
 
 
-def prettyprint(jsondata):
+def obj2dict(data):
+    obj = {kv['id']: kv['title'] for kv in data}
+    return obj
+
+
+def uprint(s):
+    if isinstance(s, unicode):
+        print(s.encode('utf-8'))
+    else:
+        print(s)
+
+
+def prettydumps(jsondata):
     return json.dumps(jsondata,
                       ensure_ascii=False, encoding='utf-8',
                       sort_keys=True,
@@ -131,16 +143,33 @@ class ApiV1:
         return req.json()
 
 
-def obj2dict(data):
-    obj = {kv['id']: kv['title'] for kv in data}
-    return obj
+class MaxdoneTxt:
+    tags = {}
+    projects = {}
+    todo = {}
+    done = {}
 
+    def __init__(self, api):
+        self.api = api
 
-def uprint(s):
-    if isinstance(s, unicode):
-        print(s.encode('utf-8'))
-    else:
-        print(s)
+    def _merge(self, dict1, dict2):
+        newdict = dict1.copy()
+        newdict.update(dict2)
+        return newdict
+
+    def _tags(self):
+        tags_v1 = obj2dict(self.api.contexts())
+        tags_v2 = obj2dict(self.api.categories())
+        self.tags = self._merge(tags_v1, tags_v2)
+        return self.tags
+
+    def _projects(self):
+        goals = obj2dict(self.api.goals(0, 10 ** 9)['content'])
+        self.projects = goals
+        return self.projects
+
+    def _todos(self):
+        obj2dict(api.todos())
 
 
 if __name__ == '__main__':
@@ -148,17 +177,11 @@ if __name__ == '__main__':
         enable_loging()
 
     api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
+    txt = MaxdoneTxt(api)
 
-    uprint(prettyprint(obj2dict(api.todos())))
-    uprint(prettyprint(obj2dict(api.completed(0, 10 ** 9)['content'])))
+    uprint(prettydumps(txt._tags()))
+    uprint(prettydumps(txt._projects()))
 
-    tags_v1 = obj2dict(api.contexts())
-    uprint(prettyprint(list(tagify(v) for k, v in tags_v1.iteritems())))
+    # uprint(prettydumps(obj2dict(api.todos())))
+    # uprint(prettydumps(obj2dict(api.completed(0, 10 ** 9)['content'])))
 
-    tags_v2 = obj2dict(api.categories())
-    uprint(prettyprint(list(tagify(v) for k, v in tags_v2.iteritems())))
-
-    goals = obj2dict(api.goals(0, 10 ** 9)['content'])
-    uprint(prettyprint(list(projectify(v) for k, v in goals.iteritems())))
-
-    uprint(prettyprint('This is Это я задача'))
