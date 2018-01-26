@@ -175,7 +175,38 @@ class MaxdoneTxt:
         return self.projects
 
     def _todos(self):
-        obj2dict(api.todos())
+        todos = self.api.todos()
+        result = []
+        for item in todos:
+            obj = {
+                "id" : item.get("id"), 
+                "title" : item.get("title"), 
+                "checklistItems":item.get("checklistItems"),
+                "startDatetime": item.get("startDatetime"),
+                "completionDate": item.get("completionDate"),
+                "goalId": item.get("goalId"),
+                "path": item.get("path"),
+                "done": item.get("done")
+                }
+            result.append(obj)
+        return result
+
+    def _done(self):
+        done = self.api.completed(0, 10 ** 9)['content']
+        result = []
+        for item in done:
+            obj = {
+                "id" : item.get("id"), 
+                "title" : item.get("title"), 
+                "checklistItems":item.get("checklistItems"),
+                "startDatetime": item.get("startDatetime"),
+                "completionDate": item.get("completionDate"),
+                "goalId": item.get("goalId"),
+                "path": item.get("path"),
+                "done": item.get("done")
+                }
+            result.append(obj)
+        return result
 
 
 class HtmlLocalhostClient:
@@ -204,12 +235,11 @@ if __name__ == '__main__':
 
     uprint(prettydumps(txt._tags()))
     uprint(prettydumps(txt._projects()))
+    uprint(prettydumps(txt._todos()))
+    uprint(prettydumps(txt._done()))
 
-    # uprint(prettydumps(obj2dict(api.todos())))
-    # uprint(prettydumps(obj2dict(api.completed(0, 10 ** 9)['content'])))
-
-    server = HtmlLocalhostClient()
-    uprint(("The maxdone.txt client is running at http://127.0.0.1:{0}\n" +
-            "Press Ctrl+C to exit." +
-            "").format(server.port))
-    server.serve_forever()
+    # server = HtmlLocalhostClient()
+    # uprint(("The maxdone.txt client is running at http://127.0.0.1:{0}\n" +
+    #         "Press Ctrl+C to exit." +
+    #         "").format(server.port))
+    # server.serve_forever()
