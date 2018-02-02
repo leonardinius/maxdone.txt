@@ -1,0 +1,6 @@
+#!/bin/bash
+
+env \
+  USERNAME='my@email' \
+  PASSWORD='user-pass#0$d' \
+  python main.py $@
