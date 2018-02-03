@@ -9,6 +9,8 @@ import SocketServer
 import string
 import sys
 import threading
+import operator
+from operator import itemgetter
 
 import html2text as _html2text
 import requests
@@ -61,35 +63,43 @@ def obj2dict(data):
     return obj
 
 
-def uprint(s):
+def uprint(s, out=sys.stdout):
     if isinstance(s, unicode):
-        print(s.encode('utf-8'))
+        out.writelines(s.encode('utf-8'))
     else:
-        print(s)
+        out.writelines(s)
 
 
 def prettydumps(jsondata):
-    return json.dumps(jsondata,
-                      ensure_ascii=False, encoding='utf-8',
-                      sort_keys=True,
-                      indent=4, separators=(',', ': '))
+    return json.dumps(
+        jsondata,
+        ensure_ascii=False,
+        encoding='utf-8',
+        sort_keys=True,
+        indent=4,
+        separators=(',', ': '))
 
 
 class ApiV1:
-    json_headers = dict(
-        {'Content-Type': 'application/json', 'Accept': 'application/json'})
+    json_headers = dict({
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    })
 
     def __init__(self, base_uri='https://maxdone.micromiles.co'):
         self.base_uri = base_uri
         self.cookies = dict()
 
     def login(self, username, password):
-        req = requests.post('{0}/services/j_spring_security_check'.format(self.base_uri), allow_redirects=False, data={
-            '_spring_security_remember_me':	'on',
-            'j_username':  username,
-            'j_password': password,
-            'spring-security-redirect': ''
-        })
+        req = requests.post(
+            '{0}/services/j_spring_security_check'.format(self.base_uri),
+            allow_redirects=False,
+            data={
+                '_spring_security_remember_me': 'on',
+                'j_username': username,
+                'j_password': password,
+                'spring-security-redirect': ''
+            })
         req.raise_for_status()
         self.cookies = req.cookies
         return self
@@ -104,8 +114,7 @@ class ApiV1:
 
     def completed(self, page, pagesize):
         req = requests.get(
-            '{0}/services/v1/tasks/completed'.format(
-                self.base_uri),
+            '{0}/services/v1/tasks/completed'.format(self.base_uri),
             cookies=self.cookies,
             headers=self.json_headers,
             params={
@@ -118,8 +127,7 @@ class ApiV1:
 
     def contexts(self):
         req = requests.get(
-            '{0}/services/v1/user-contexts'.format(
-                self.base_uri),
+            '{0}/services/v1/user-contexts'.format(self.base_uri),
             cookies=self.cookies,
             headers=self.json_headers)
         req.raise_for_status()
@@ -127,8 +135,7 @@ class ApiV1:
 
     def categories(self):
         req = requests.get(
-            '{0}/services/v1/tasks/projects'.format(
-                self.base_uri),
+            '{0}/services/v1/tasks/projects'.format(self.base_uri),
             cookies=self.cookies,
             headers=self.json_headers)
         req.raise_for_status()
@@ -136,8 +143,7 @@ class ApiV1:
 
     def goals(self, page, pagesize):
         req = requests.get(
-            '{0}/services/v1/private-goals/my'.format(
-                self.base_uri),
+            '{0}/services/v1/private-goals/my'.format(self.base_uri),
             cookies=self.cookies,
             headers=self.json_headers,
             params={
@@ -163,64 +169,117 @@ class MaxdoneTxt:
         newdict.update(dict2)
         return newdict
 
-    def _tags(self):
+    def _rawTags(self):
         tags_v1 = obj2dict(self.api.contexts())
         tags_v2 = obj2dict(self.api.categories())
         self.tags = self._merge(tags_v1, tags_v2)
         return self.tags
 
-    def _projects(self):
-        goals = obj2dict(self.api.goals(0, 10 ** 9)['content'])
+    def _rawProjects(self):
+        goals = obj2dict(self.api.goals(0, 10**9)['content'])
         self.projects = goals
         return self.projects
 
-    def _todos(self):
+    def _rawTodos(self):
         todos = self.api.todos()
         result = []
         for item in todos:
             obj = {
-                "id" : item.get("id"), 
-                "title" : item.get("title"), 
-                "checklistItems":item.get("checklistItems"),
-                "startDatetime": item.get("startDatetime"),
-                "completionDate": item.get("completionDate"),
-                "goalId": item.get("goalId"),
-                "path": item.get("path"),
-                "done": item.get("done")
-                }
+                'id': item.get('id'),
+                'title': item.get('title'),
+                'goalId': item.get('goalId'),
+                'path': item.get('path'),
+                'creationDatetime': item.get('ct'),
+                'modifiedDatetime': item.get('mt'),
+                'startDatetime': item.get('startDatetime'),
+                'dueDate': item.get('dueDate'),
+                'completionDate': item.get('completionDate'),
+                'recurRule': item.get('recurRule'),
+                'notes': item.get('notes'),
+                'checklistItems': item.get('checklistItems'),
+                'priority': item.get('priority', 0),
+                'done': item.get('done', False)
+            }
             result.append(obj)
+        result = sorted(result, key=itemgetter('priority'), reverse=True)
         return result
 
-    def _done(self):
-        done = self.api.completed(0, 10 ** 9)['content']
+    def _rawDone(self):
+        done = self.api.completed(0, 10**9)['content']
         result = []
         for item in done:
             obj = {
-                "id" : item.get("id"), 
-                "title" : item.get("title"), 
-                "checklistItems":item.get("checklistItems"),
-                "startDatetime": item.get("startDatetime"),
-                "completionDate": item.get("completionDate"),
-                "goalId": item.get("goalId"),
-                "path": item.get("path"),
-                "done": item.get("done")
-                }
+                'id': item.get('id'),
+                'title': item.get('title'),
+                'goalId': item.get('goalId'),
+                'path': item.get('path'),
+                'creationDatetime': item.get('ct'),
+                'modifiedDatetime': item.get('mt'),
+                'startDatetime': item.get('startDatetime'),
+                'dueDate': item.get('dueDate'),
+                'completionDate': item.get('completionDate'),
+                'recurRule': item.get('recurRule'),
+                'notes': item.get('notes'),
+                'checklistItems': item.get('checklistItems'),
+                'priority': item.get('priority', 0),
+                'done': item.get('done', True)
+            }
             result.append(obj)
         return result
+
+    def _lineitem(self, item):
+        item = re.sub(r'\s{2,}', ' ', item)
+        item = item.strip()
+        return item
+
+    def _uprint(self, ctx):
+        h = lambda s: re.sub(r'[\r\n]+', ' ', html2text(s)) if s else ''
+        n = lambda s: h(s).encode('utf-8') if s else ''
+        datef = lambda d: d.split('T')[0]
+        out = []
+
+        items = ctx['todos'] + ctx['done']
+        for item in items:
+            done = n('x' if item['done'] else '')
+            completionDate = datef(n(item['completionDate']))
+            creationDatetime = datef(n(item['creationDatetime'])) if completionDate else ''
+            
+            title = n(item['title'])
+
+            goalId = item['goalId']
+            projects = projectify(ctx['projects'][goalId]) if goalId else ''
+            projects = n(projects)
+
+            tagIds = item['path'].split(',')
+            tags = [tagify(tag) for tag in [ctx['tags'].get(tagId, '') for tagId in tagIds] if tag]
+            tags = n(' '.join(tags))
+
+            out.append(self._lineitem(
+                    "{done} {completionDate} {creationDatetime} {title} {projects} {tags} {extrakv}".
+                    format(**{
+                            'done': done,
+                            'completionDate': completionDate,
+                            'creationDatetime': creationDatetime,
+                            'title': title,
+                            'projects': projects,
+                            'tags': tags,
+                            'extrakv': ''
+                        })))
+        return '\n'.join(out)
 
 
 class HtmlLocalhostClient:
     def __init__(self, port=8000):
         self.port = port
         self.handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-        self.httpd = SocketServer.TCPServer(("", port), self.handler)
+        self.httpd = SocketServer.TCPServer(('', port), self.handler)
 
     def serve_forever(self):
         self.httpd.serve_forever()
 
 
 def signal_handler(signal, frame):
-    uprint("\nYou pressed Ctrl+C!")
+    uprint('\nYou pressed Ctrl+C!')
     sys.exit(0)
 
 
@@ -233,13 +292,16 @@ if __name__ == '__main__':
     api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
     txt = MaxdoneTxt(api)
 
-    uprint(prettydumps(txt._tags()))
-    uprint(prettydumps(txt._projects()))
-    uprint(prettydumps(txt._todos()))
-    uprint(prettydumps(txt._done()))
+    ctx = {
+        'todos': txt._rawTodos(),
+        'projects': txt._rawProjects(),
+        'tags': txt._rawTags(),
+        'done': txt._rawDone()
+    }
+    uprint(txt._uprint(ctx))
 
     # server = HtmlLocalhostClient()
-    # uprint(("The maxdone.txt client is running at http://127.0.0.1:{0}\n" +
-    #         "Press Ctrl+C to exit." +
-    #         "").format(server.port))
+    # uprint(('The maxdone.txt client is running at http://127.0.0.1:{0}\n' +
+    #         'Press Ctrl+C to exit.' +
+    #         '').format(server.port))
     # server.serve_forever()
