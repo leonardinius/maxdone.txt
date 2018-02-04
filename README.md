@@ -1,19 +1,17 @@
-# maxdone.txt
+# Maxdone.txt
 
-## index.html 
+This is [Maxdone](https://maxdone.micromiles.co/) service todo task list (partial, 80/20 pareto principle) export in the [todo.txt](http://todotxt.org/) format.
 
-Bulldog is an HTML view for Todo.txt (http://todotxt.com).
+> **NB!** This is personal project for personal needs, e.g. to regularly backup proprietary service data in simple plain text format. 
+> 
+> I am planning to support it as long as I continue my (trial at this stage) use of the Maxdone service. No other guarantees are provided. 
 
-&copy; Infews LLC - MIT License - more at http://github.com/infews/bulldog
-
-tbd, wip
-
-```
-env HTTP_DEBUG= USERNAME='<username>' PASSWORD='<password>' python main.py
-```
-
+## How to install
 
 ```
-env USERNAME='<username>' PASSWORD='<password>' python main.py
+pip install -r requirements.txt
 ```
 
+## How to run
+
+See `run.sh.template` as example.
