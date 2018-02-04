@@ -1,36 +1,15 @@
 # coding=utf-8
 
 import json
+import operator
 import os
 import re
-import signal
-import SimpleHTTPServer
-import SocketServer
 import string
 import sys
-import threading
-import operator
 from operator import itemgetter
 
 import html2text as _html2text
 import requests
-
-
-def enable_loging():
-    import logging
-    try:
-        import http.client as http_client
-    except ImportError:
-        # Python 2
-        import httplib as http_client
-    http_client.HTTPConnection.debuglevel = 1
-
-    # You must initialize logging, otherwise you'll not see debug output.
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger("requests.packages.urllib3")
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
 
 
 def html2text(html):
@@ -242,32 +221,45 @@ class MaxdoneTxt:
         for item in items:
             done = n('x' if item['done'] else '')
             completionDate = datef(n(item['completionDate']))
-            creationDatetime = datef(n(item['creationDatetime'])) if completionDate else ''
-            
+            creationDatetime = datef(n(
+                item['creationDatetime'])) if completionDate else ''
+
             title = n(item['title'])
 
-            notes = n(item['notes']) 
-            notes = 'Notes: ' + notes if notes else '';
+            notes = n(item['notes'])
+            notes = 'Notes: ' + notes if notes else ''
 
-            checklistItems = ['{0} {1}'.format('[x]' if check['done'] else '[ ]', n(check['title'])) for check in item['checklistItems']]
+            checklistItems = [
+                '{0} {1}'.format('[x]' if check['done'] else '[ ]',
+                                 n(check['title']))
+                for check in item['checklistItems']
+            ]
             checklistItems = '. '.join(checklistItems)
-            checklistItems = 'Checklist: (' + checklistItems + ')' if checklistItems else '';
+            checklistItems = 'Checklist: (' + checklistItems + ')' if checklistItems else ''
 
             goalId = item['goalId']
             projects = projectify(ctx['projects'][goalId]) if goalId else ''
             projects = n(projects)
 
             tagIds = item['path'].split(',')
-            tags = [tagify(tag) for tag in [ctx['tags'].get(tagId, '') for tagId in tagIds] if tag]
+            tags = [
+                tagify(tag)
+                for tag in [ctx['tags'].get(tagId, '') for tagId in tagIds]
+                if tag
+            ]
             tags = n(' '.join(tags))
 
             extrakv = ''
-            extrakv = extrakv + ' due:' + datef(n(item['dueDate'])) if item['dueDate'] else extrakv
-            extrakv = extrakv + ' recur:' + item['recurRule'] if item['recurRule'] else extrakv
+            extrakv = extrakv + ' due:' + datef(n(
+                item['dueDate'])) if item['dueDate'] else extrakv
+            extrakv = extrakv + ' recur:' + item['recurRule'] if item[
+                'recurRule'] else extrakv
 
-            out.append(self._lineitem(
+            out.append(
+                self._lineitem(
                     "{done} {completionDate} {creationDatetime} {title} {notes} {checklistItems} {projects} {tags} {extrakv}".
-                    format(**{
+                    format(
+                        **{
                             'done': done,
                             'completionDate': completionDate,
                             'creationDatetime': creationDatetime,
@@ -281,27 +273,7 @@ class MaxdoneTxt:
         return '\n'.join(out)
 
 
-class HtmlLocalhostClient:
-    def __init__(self, port=8000):
-        self.port = port
-        self.handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-        self.httpd = SocketServer.TCPServer(('', port), self.handler)
-
-    def serve_forever(self):
-        self.httpd.serve_forever()
-
-
-def signal_handler(signal, frame):
-    uprint('\nYou pressed Ctrl+C!')
-    sys.exit(0)
-
-
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
-
-    if 'HTTP_DEBUG' in os.environ:
-        enable_loging()
-
     api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
     txt = MaxdoneTxt(api)
 
