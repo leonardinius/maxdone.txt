@@ -35,7 +35,7 @@ def enable_loging():
 
 def html2text(html):
     h = _html2text.HTML2Text()
-    h.ignore_links = False
+    h.ignore_links = True
     return h.handle(html)
 
 
@@ -196,7 +196,7 @@ class MaxdoneTxt:
                 'completionDate': item.get('completionDate'),
                 'recurRule': item.get('recurRule'),
                 'notes': item.get('notes'),
-                'checklistItems': item.get('checklistItems'),
+                'checklistItems': item.get('checklistItems', []),
                 'priority': item.get('priority', 0),
                 'done': item.get('done', False)
             }
@@ -220,7 +220,7 @@ class MaxdoneTxt:
                 'completionDate': item.get('completionDate'),
                 'recurRule': item.get('recurRule'),
                 'notes': item.get('notes'),
-                'checklistItems': item.get('checklistItems'),
+                'checklistItems': item.get('checklistItems', []),
                 'priority': item.get('priority', 0),
                 'done': item.get('done', True)
             }
@@ -233,7 +233,7 @@ class MaxdoneTxt:
         return item
 
     def _uprint(self, ctx):
-        h = lambda s: re.sub(r'[\r\n]+', ' ', html2text(s)) if s else ''
+        h = lambda s: re.sub(r'[\r\n]+', ' ', html2text(s)).strip() if s else ''
         n = lambda s: h(s).encode('utf-8') if s else ''
         datef = lambda d: d.split('T')[0]
         out = []
@@ -246,6 +246,13 @@ class MaxdoneTxt:
             
             title = n(item['title'])
 
+            notes = n(item['notes']) 
+            notes = 'Notes: ' + notes if notes else '';
+
+            checklistItems = ['{0} {1}'.format('[x]' if check['done'] else '[ ]', n(check['title'])) for check in item['checklistItems']]
+            checklistItems = '. '.join(checklistItems)
+            checklistItems = 'Checklist: (' + checklistItems + ')' if checklistItems else '';
+
             goalId = item['goalId']
             projects = projectify(ctx['projects'][goalId]) if goalId else ''
             projects = n(projects)
@@ -254,16 +261,22 @@ class MaxdoneTxt:
             tags = [tagify(tag) for tag in [ctx['tags'].get(tagId, '') for tagId in tagIds] if tag]
             tags = n(' '.join(tags))
 
+            extrakv = ''
+            extrakv = extrakv + ' due:' + datef(n(item['dueDate'])) if item['dueDate'] else extrakv
+            extrakv = extrakv + ' recur:' + item['recurRule'] if item['recurRule'] else extrakv
+
             out.append(self._lineitem(
-                    "{done} {completionDate} {creationDatetime} {title} {projects} {tags} {extrakv}".
+                    "{done} {completionDate} {creationDatetime} {title} {notes} {checklistItems} {projects} {tags} {extrakv}".
                     format(**{
                             'done': done,
                             'completionDate': completionDate,
                             'creationDatetime': creationDatetime,
                             'title': title,
+                            'notes': notes,
+                            'checklistItems': checklistItems,
                             'projects': projects,
                             'tags': tags,
-                            'extrakv': ''
+                            'extrakv': extrakv
                         })))
         return '\n'.join(out)
 
