@@ -284,9 +284,3 @@ if __name__ == '__main__':
         'done': txt._rawDone()
     }
     uprint(txt._uprint(ctx))
-
-    # server = HtmlLocalhostClient()
-    # uprint(('The maxdone.txt client is running at http://127.0.0.1:{0}\n' +
-    #         'Press Ctrl+C to exit.' +
-    #         '').format(server.port))
-    # server.serve_forever()
