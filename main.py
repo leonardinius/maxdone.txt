@@ -11,8 +11,8 @@ from operator import itemgetter
 import html2text as html2text
 import requests
 
-from api import ApiV1
-from todo import MaxdoneTxt
+from maxdone import ApiV1
+from maxdone import MaxdoneTxt
 
 if __name__ == '__main__':
     api = ApiV1().login(os.environ['USERNAME'], os.environ['PASSWORD'])
