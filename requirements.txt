@@ -1,2 +1,2 @@
 html2text==2018.1.9
-requests==2.18.4
+requests==2.21.1

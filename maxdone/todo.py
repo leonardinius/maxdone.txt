@@ -151,7 +151,8 @@ class MaxdoneTxt:
             checklistItems = 'Checklist: (' + checklistItems + ')' if checklistItems else ''
 
             goalId = item['goalId']
-            projects = projectify(ctx['projects'][goalId]) if goalId else ''
+            projects = projectify(
+                ctx['projects'][goalId]) if goalId and goalId in ctx['projects'] else ''
             projects = n(projects)
 
             tagIds = item['path'].split(',')
